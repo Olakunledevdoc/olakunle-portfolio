@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Olakunle — Workflow & Ops Designer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    /* ===================== CSS VARIABLES ===================== */
+    :root {
+      --bg:        #080d1a;
+      --bg2:       #0d1528;
+      --bg3:       #111c35;
+      --accent:    #00b4d8;
+      --accent2:   #0077a8;
+      --text:      #e8f0f7;
+      --muted:     #7a93b0;
+      --border:    rgba(0,180,216,0.15);
+      --card:      rgba(13,21,40,0.85);
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    /* ===================== RESET ===================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+    a { color: var(--accent); text-decoration: none; transition: opacity .2s; }
+    a:hover { opacity: .75; }
+    img { max-width: 100%; display: block; }
+
+    /* ===================== NOISE OVERLAY ===================== */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: .4;
+    }
+
+    /* ===================== NAV ===================== */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 5%;
+      background: rgba(8,13,26,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: var(--font-head);
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      font-size: .85rem;
+      font-weight: 500;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--accent); opacity: 1; }
+
+    /* ===================== HERO ===================== */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 8rem 5% 5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,180,216,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,180,216,0.04) 1px, transparent 1px);
+      background-size: 50px 50px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black, transparent);
+    }
+    .hero-glow {
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,180,216,0.12) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 780px;
+    }
+    .hero-label {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      font-size: .78rem;
+      font-weight: 500;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+      padding: .4rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      background: rgba(0,180,216,0.06);
+    }
+    .hero-label::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .4; transform: scale(1.4); }
+    }
+    .hero-name {
+      font-family: var(--font-head);
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      font-weight: 800;
+      line-height: 1.0;
+      letter-spacing: -2px;
+      color: var(--text);
+      margin-bottom: .4rem;
+    }
+    .hero-name span { color: var(--accent); }
+    .hero-role {
+      font-family: var(--font-head);
+      font-size: clamp(1rem, 2.5vw, 1.35rem);
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      margin-bottom: 1.75rem;
+    }
+    .hero-tagline {
+      font-size: clamp(1.05rem, 2vw, 1.2rem);
+      font-weight: 300;
+      color: var(--text);
+      max-width: 580px;
+      line-height: 1.65;
+      margin-bottom: 2.5rem;
+      opacity: .88;
+    }
+    .hero-cta {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .85rem 1.8rem;
+      border-radius: 6px;
+      font-family: var(--font-body);
+      font-size: .9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .25s;
+      border: none;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+    }
+    .btn-primary:hover { background: #00caf5; opacity: 1; transform: translateY(-2px); }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); opacity: 1; transform: translateY(-2px); }
+
+    /* ===================== SECTIONS ===================== */
+    section { padding: 6rem 5%; position: relative; z-index: 1; }
+    .section-label {
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: .75rem;
+    }
+    .section-title {
+      font-family: var(--font-head);
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+    .section-sub {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 520px;
+      line-height: 1.7;
+      margin-bottom: 3.5rem;
+    }
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: var(--border);
+      margin: 0;
+    }
+
+    /* ===================== ABOUT ===================== */
+    #about { background: var(--bg2); }
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+    .about-text p {
+      font-size: 1.05rem;
+      color: var(--muted);
+      line-height: 1.8;
+      margin-bottom: 1.2rem;
+    }
+    .about-text p strong { color: var(--text); font-weight: 500; }
+    .about-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    .stat-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+    }
+    .stat-number {
+      font-family: var(--font-head);
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: .3rem;
+    }
+    .stat-label {
+      font-size: .82rem;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    /* ===================== SERVICES ===================== */
+    #services { background: var(--bg); }
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+    .service-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem;
+      transition: all .3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .service-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .service-card:hover { border-color: rgba(0,180,216,0.35); transform: translateY(-4px); }
+    .service-card:hover::before { opacity: 1; }
+    .service-icon {
+      font-size: 1.6rem;
+      margin-bottom: 1rem;
+    }
+    .service-title {
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: .5rem;
+    }
+    .service-desc {
+      font-size: .88rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ===================== PROJECTS ===================== */
+    #projects { background: var(--bg2); }
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1.5rem;
+    }
+    .project-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      transition: all .3s;
+    }
+    .project-card:hover { border-color: rgba(0,180,216,0.4); transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+    .project-img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      background: var(--bg3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .project-img-placeholder {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, var(--bg3) 0%, #0a1628 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .project-img-placeholder .placeholder-icon { font-size: 2.5rem; opacity: .4; }
+    /* 🖼️ HOW TO ADD YOUR SCREENSHOT:
+       1. Copy your screenshot into the same folder as this index.html
+       2. Name it something like: project1.png, project2.png, etc.
+       3. Replace the div.project-img-placeholder with:
+          <img src="project1.png" alt="Project Name" style="width:100%;height:200px;object-fit:cover;" />
+    */
+    .project-img-placeholder .placeholder-text {
+      font-size: .75rem;
+      color: var(--muted);
+      letter-spacing: .05em;
+      opacity: .5;
+    }
+    .project-body { padding: 1.5rem; }
+    .project-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4rem;
+      margin-bottom: 1rem;
+    }
+    .tag {
+      font-size: .7rem;
+      font-weight: 500;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(0,180,216,0.08);
+      border: 1px solid rgba(0,180,216,0.2);
+      padding: .25rem .6rem;
+      border-radius: 4px;
+    }
+    .project-title {
+      font-family: var(--font-head);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: .6rem;
+    }
+    .project-desc {
+      font-size: .88rem;
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 1.25rem;
+    }
+    .project-links {
+      display: flex;
+      gap: .75rem;
+      flex-wrap: wrap;
+    }
+    .project-link {
+      font-size: .8rem;
+      font-weight: 500;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      opacity: .85;
+      transition: opacity .2s;
+    }
+    .project-link:hover { opacity: 1; }
+    /* 🔗 HOW TO ADD A LOOM VIDEO LINK:
+       Find the project-links div for your project and add:
+       <a href="YOUR_LOOM_URL" target="_blank" class="project-link">▶ Watch Demo</a>
+    */
+
+    /* ===================== TOOLS ===================== */
+    #tools { background: var(--bg); }
+    .tools-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+    }
+    .tool-pill {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .6rem 1.1rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      font-size: .85rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all .25s;
+    }
+    .tool-pill:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+    .tool-pill span { font-size: 1rem; }
+
+    /* ===================== CONTACT ===================== */
+    #contact { background: var(--bg2); }
+    .contact-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: start;
+    }
+    .contact-info p {
+      font-size: 1rem;
+      color: var(--muted);
+      line-height: 1.8;
+      margin-bottom: 2rem;
+    }
+    .contact-links { display: flex; flex-direction: column; gap: 1rem; }
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: .92rem;
+      transition: all .25s;
+    }
+    .contact-item:hover { border-color: var(--accent); color: var(--accent); opacity: 1; transform: translateX(4px); }
+    .contact-item-icon { font-size: 1.2rem; }
+    .contact-form { display: flex; flex-direction: column; gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: .4rem; }
+    .form-label { font-size: .8rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+    .form-input, .form-textarea {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .85rem 1rem;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: .95rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .form-input:focus, .form-textarea:focus { border-color: var(--accent); }
+    .form-textarea { min-height: 130px; resize: vertical; }
+    .form-input::placeholder, .form-textarea::placeholder { color: var(--muted); opacity: .5; }
+
+    /* ===================== FOOTER ===================== */
+    footer {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 2rem 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+    .footer-logo {
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+    .footer-logo span { color: var(--accent); }
+    .footer-copy { font-size: .82rem; color: var(--muted); }
+
+    /* ===================== ANIMATIONS ===================== */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity .65s ease, transform .65s ease;
+    }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+    /* ===================== RESPONSIVE ===================== */
+    @media (max-width: 768px) {
+      .about-grid, .contact-wrapper { grid-template-columns: 1fr; gap: 2.5rem; }
+      .nav-links { display: none; }
+      .hero-name { letter-spacing: -1px; }
+      .projects-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===================== NAV ===================== -->
+  <nav>
+    <div class="nav-logo">Ola<span>kunle</span></div>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#services">Services</a></li>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#tools">Tools</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- ===================== HERO ===================== -->
+  <section id="hero">
+    <div class="hero-grid-bg"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+      <div class="hero-label">Available for new projects</div>
+      <h1 class="hero-name">Ola<span>kunle</span></h1>
+      <p class="hero-role">Workflow &amp; Ops Designer</p>
+      <p class="hero-tagline">
+        Saving real estate agencies, law firms and trade businesses hours every week through smart automation.
+      </p>
+      <div class="hero-cta">
+        <a href="#projects" class="btn btn-primary">View My Work →</a>
+        <a href="#contact" class="btn btn-outline">Let's Talk</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ===================== ABOUT ===================== -->
+  <section id="about">
+    <div class="fade-up">
+      <p class="section-label">Who I Am</p>
+      <h2 class="section-title">Built for businesses that are<br/>tired of repetitive work</h2>
+    </div>
+    <div class="about-grid fade-up">
+      <div class="about-text">
+        <p>
+          I'm <strong>Omisore Kehinde</strong>, a Workflow & Ops Designer who goes by <strong>Olakunle</strong> in the automation space. I specialise in building no-code and AI-powered automation systems for businesses in <strong>real estate, law, HVAC, plumbing, and painting</strong>.
+        </p>
+        <p>
+          My work is simple: I find the tasks your team does manually every single day — the copy-pasting, the follow-ups, the ticket routing, the review monitoring — and I <strong>automate them completely</strong>, so your team can focus on work that actually grows your business.
+        </p>
+        <p>
+          Using tools like <strong>Make.com, Airtable, HubSpot, and Groq AI</strong>, I build systems that run 24/7 without needing a human in the middle.
+        </p>
+      </div>
+      <div class="about-stats">
+        <div class="stat-card">
+          <div class="stat-number">5+</div>
+          <div class="stat-label">Automation Systems Built</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">24/7</div>
+          <div class="stat-label">Systems Run Without Supervision</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">0</div>
+          <div class="stat-label">Lines of Code Written</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">100%</div>
+          <div class="stat-label">No-Code & AI Powered</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ===================== SERVICES ===================== -->
+  <section id="services">
+    <div class="fade-up">
+      <p class="section-label">What I Do</p>
+      <h2 class="section-title">Services</h2>
+      <p class="section-sub">Every service is built to eliminate manual work and give you back time to focus on what matters.</p>
+    </div>
+    <div class="services-grid fade-up">
+
+      <div class="service-card">
+        <div class="service-icon">🎯</div>
+        <div class="service-title">Lead Management Automation</div>
+        <div class="service-desc">Automatically capture, assign and follow up with leads the moment they come in — no manual entry, no missed opportunities.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">🚀</div>
+        <div class="service-title">Client Onboarding Workflows</div>
+        <div class="service-desc">Automate the paperwork, welcome emails, and communication flow when a new client signs on — a seamless experience every time.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">📅</div>
+        <div class="service-title">Appointment & Scheduling Automation</div>
+        <div class="service-desc">Auto-booking, reminders, and confirmations that run without anyone lifting a finger. No more double bookings or missed appointments.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">📄</div>
+        <div class="service-title">Document & Report Generation</div>
+        <div class="service-desc">Auto-generate invoices, contracts, and job reports based on triggers — saving hours of manual document work every week.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">🔗</div>
+        <div class="service-title">CRM Integration</div>
+        <div class="service-desc">Connect your tools so data flows automatically between your CRM, email, calendar, and spreadsheets — no manual data entry.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">🤖</div>
+        <div class="service-title">AI-Powered Communication</div>
+        <div class="service-desc">Automated, personalised emails and SMS follow-ups powered by AI — so every client feels attended to without you typing a single word.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">⭐</div>
+        <div class="service-title">Review & Reputation Monitoring</div>
+        <div class="service-desc">24/7 AI-powered system that monitors, analyses, and responds to online reviews — protecting your brand while you focus on your business.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">🎫</div>
+        <div class="service-title">Enterprise Ticketing Systems</div>
+        <div class="service-desc">AI-powered ticket classification, routing, and response system that handles support requests in under a minute — no human triage needed.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">📱</div>
+        <div class="service-title">Automated Social Media Generation</div>
+        <div class="service-desc">AI writes the content, generates the visuals, and posts on schedule — turning weeks of social media work into a one-time setup.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">🏥</div>
+        <div class="service-title">AI-Powered Triage Systems</div>
+        <div class="service-desc">Intelligent intake and classification systems that route requests to the right person or action automatically — based on urgency and category.</div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">📧</div>
+        <div class="service-title">Email Digester</div>
+        <div class="service-desc">Stop checking emails 20 times a day. Get one clean, AI-summarised digest of your most urgent emails delivered once daily.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ===================== PROJECTS ===================== -->
+  <section id="projects">
+    <div class="fade-up">
+      <p class="section-label">My Work</p>
+      <h2 class="section-title">Projects</h2>
+      <p class="section-sub">Real systems built to solve real operational problems. Each one runs 24/7 with zero manual intervention.</p>
+    </div>
+    <div class="projects-grid fade-up">
+
+      <!-- PROJECT 1 — REVIEW MONITOR -->
+      <div class="project-card">
+        <!-- 🖼️ REPLACE THIS with your screenshot:
+             1. Copy screenshot into this folder, name it e.g. review-monitor.png
+             2. Replace the div below with: <img src="review-monitor.png" alt="Review Monitor" style="width:100%;height:200px;object-fit:cover;" />
+             🔗 Add your Loom link in project-links below when ready
+        -->
+       <div style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;">
+  <img src="review monitor.png" alt="Review Monitor" style="min-width:100%;height:200px;object-fit:cover;scroll-snap-align:start;" />
+  <img src="airtabledatabaseforreviewmonitor.png" alt="Airtable Database" style="min-width:100%;height:200px;object-fit:cover;scroll-snap-align:start;" />
+  <img src="gmailresponseforreviewmonitor.png" alt="Gmail Response" style="min-width:100%;height:200px;object-fit:cover;scroll-snap-align:start;" />
+</div>
+        <div class="project-body">
+          <div class="project-tags">
+            <span class="tag">Make.com</span>
+            <span class="tag">Apify</span>
+            <span class="tag">Groq AI</span>
+            <span class="tag">Airtable</span>
+            <span class="tag">Slack</span>
+          </div>
+          <div class="project-title">Automated Reputation Management System</div>
+          <div class="project-desc">
+            A 24/7 review monitoring system that scrapes Trustpilot every 15 minutes, checks for duplicates, runs AI sentiment analysis via Groq, drafts a response, logs everything to Airtable, and instantly alerts the team on Slack. The owner never misses a review — they just make the final call.
+          </div>
+          <div class="project-links">
+            <!-- 🔗 Uncomment and replace URL when your Loom video is ready:
+            <a href="YOUR_LOOM_URL" target="_blank" class="project-link">▶ Watch Demo</a>
+            -->
+            <span class="project-link" style="opacity:.35; cursor:default;">▶ Demo coming soon</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROJECT 2 — ENTERPRISE TICKETING -->
+      <div class="project-card">
+        <!-- 🖼️ REPLACE THIS with your screenshot:
+             Name it e.g. ticketing-system.png and swap the div below
+        -->
+       <div style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;">
+  <img src="enterprisetiketingsystem.jpg" alt="Enterprise Ticketing System" style="min-width:100%;height:200px;object-fit:cover;scroll-snap-align:start;" />
+  <img src="trellopartofticketingsystem.png" alt="Ticket Logging on Trello" style="min-width:100%;height:200px;object-fit:cover;scroll-snap-align:start;" />
+  <img src="airtabledatabaseofticketingsystem.jpg" alt="Airtable Database" style="min-width:100%;height:200px;object-fit:cover;scroll-snap-align:start;" />
+</div>
+        <div class="project-body">
+          <div class="project-tags">
+            <span class="tag">Make.com</span>
+            <span class="tag">Telegram Bot</span>
+            <span class="tag">Groq AI</span>
+            <span class="tag">Airtable</span>
+            <span class="tag">Trello</span>
+            <span class="tag">Slack</span>
+          </div>
+          <div class="project-title">AI-Powered Enterprise Ticketing System</div>
+          <div class="project-desc">
+            Customer messages a Telegram bot, which collects their details automatically. Make checks if they're a new or existing customer in Airtable. Groq AI reads every ticket, classifies it by priority, category, and sentiment, drafts a response, creates a Trello card, assigns it to the right agent, pings Slack, and sends the customer a confirmation — all in under 60 seconds.
+          </div>
+          <div class="project-links">
+            <span class="project-link" style="opacity:.35; cursor:default;">▶ Demo coming soon</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROJECT 3 — SOCIAL MEDIA AUTOMATION -->
+      <div class="project-card">
+        <!-- 🖼️ REPLACE THIS with your screenshot:
+             Name it e.g. social-media.png and swap the div below
+        -->
+        <div style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;">
+  <img src="linkedinimagegeneration.png" alt="Social Media Post Generation" style="min-width:100%;height:200px;object-fit:cover;scroll-snap-align:start;" />
+  <img src="linkedpagethatwasgotten.png" alt="Final Result" style="min-width:100%;height:200px;object-fit:cover;scroll-snap-align:start;" />
+  < />
+</div>
+        <div class="project-body">
+          <div class="project-tags">
+            <span class="tag">Make.com</span>
+            <span class="tag">Groq AI</span>
+            <span class="tag">Kling AI</span>
+            <span class="tag">LinkedIn</span>
+            <span class="tag">HubSpot</span>
+            <span class="tag">Airtable</span>
+          </div>
+          <div class="project-title">Automated Social Media Post Generation</div>
+          <div class="project-desc">
+            Eliminates 84+ hours per month of manual social media work. Groq AI writes the post content, Kling AI (Pixazo) generates the image, the system posts to LinkedIn on a set schedule, updates Airtable automatically, and logs every post to HubSpot CRM. Set it up once — it runs forever.
+          </div>
+          <div class="project-links">
+            <span class="project-link" style="opacity:.35; cursor:default;">▶ Demo coming soon</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROJECT 4 — PATIENT TRIAGE -->
+      <div class="project-card">
+        <!-- 🖼️ REPLACE THIS with your screenshot:
+             Name it e.g. triage-system.png and swap the div below
+        -->
+       <div style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;">
+  <img src="medicare1.png" alt="AI Powered Medical Triage System" style="min-width:100%;height:200px;object-fit:cover;scroll-snap-align:start;" />
+  <img src="medicare2.png" alt="First Response" style="min-width:100%;height:200px;object-fit:cover;scroll-snap-align:start;" />
+ <img src="medicare3.png" alt="Gmail Response" style="min-width:100%;height:200px;object-fit:cover;scroll-snap-align:start;" />
+ <img src="medicare4.png" alt="Gmail Response" style="min-width:100%;height:200px;object-fit:cover;scroll-snap-align:start;" />
+ <img src="medicare5.png" alt="Gmail Response" style="min-width:100%;height:200px;object-fit:cover;scroll-snap-align:start;" />
+</div>
+        <div class="project-body">
+          <div class="project-tags">
+            <span class="tag">Make.com</span>
+            <span class="tag">Groq AI</span>
+            <span class="tag">LLaMA 3.3</span>
+            <span class="tag">Tally</span>
+            <span class="tag">Calendly</span>
+            <span class="tag">Google Sheets</span>
+          </div>
+          <div class="project-title">AI-Powered Patient Triage System</div>
+          <div class="project-desc">
+            Patient fills a symptom intake form on Tally. A webhook fires into Make, Groq AI (LLaMA 3.3) reads the symptoms and classifies urgency as LOW, MEDIUM, or HIGH. LOW gets personalised self-care tips. MEDIUM gets a Calendly link for a telehealth consult. HIGH triggers an instant doctor alert and A&E instruction. All submissions logged to Google Sheets automatically.
+          </div>
+          <div class="project-links">
+            <span class="project-link" style="opacity:.35; cursor:default;">▶ Demo coming soon</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROJECT 5 — EMAIL DIGESTER -->
+      <div class="project-card">
+        <!-- 🖼️ REPLACE THIS with your screenshot:
+             Name it e.g. email-digester.png and swap the div below
+        -->
+       <div style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;">
+  <img src="digest1.png" alt="Email Digester" style="min-width:100%;height:200px;object-fit:cover;scroll-snap-align:start;" />
+  <img src="digest2.png" alt="Telegram Bot" style="min-width:100%;height:200px;object-fit:cover;scroll-snap-align:start;" />
+  < />
+</div>
+        <div class="project-body">
+          <div class="project-tags">
+            <span class="tag">Make.com</span>
+            <span class="tag">Gmail</span>
+            <span class="tag">Telegram</span>
+            <span class="tag">AI</span>
+          </div>
+          <div class="project-title">Automated Email Digest System</div>
+          <div class="project-desc">
+            Instead of checking emails 20 times a day, the system scans Gmail for urgent and pending messages, filters and groups them intelligently, and delivers one clean AI-summarised digest to Telegram every evening at 6PM. Businesses save hours daily on inbox management.
+          </div>
+          <div class="project-links">
+            <span class="project-link" style="opacity:.35; cursor:default;">▶ Demo coming soon</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ➕ HOW TO ADD A NEW PROJECT:
+           Copy the entire project-card block above (from div.project-card to its closing /div)
+           Paste it here and update:
+           - The placeholder icon emoji
+           - The tags (tools used)
+           - The project-title
+           - The project-desc
+           - The screenshot (follow the comment instructions)
+           - The Loom link when ready
+      -->
+
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ===================== TOOLS ===================== -->
+  <section id="tools">
+    <div class="fade-up">
+      <p class="section-label">My Stack</p>
+      <h2 class="section-title">Tools I Work With</h2>
+      <p class="section-sub">Every tool in this list has been used in a real, deployed automation system.</p>
+    </div>
+    <div class="tools-grid fade-up">
+      <!-- ➕ HOW TO ADD A NEW TOOL:
+           Copy any tool-pill line below and paste it in this list.
+           Change the emoji and tool name.
+      -->
+      <div class="tool-pill"><span>⚙️</span> Make.com</div>
+      <div class="tool-pill"><span>🗄️</span> Airtable</div>
+      <div class="tool-pill"><span>🤖</span> Groq AI</div>
+      <div class="tool-pill"><span>🧠</span> Gemini AI</div>
+      <div class="tool-pill"><span>📊</span> HubSpot CRM</div>
+      <div class="tool-pill"><span>💬</span> Telegram Bot</div>
+      <div class="tool-pill"><span>📧</span> Gmail</div>
+      <div class="tool-pill"><span>💼</span> Slack</div>
+      <div class="tool-pill"><span>📋</span> Trello</div>
+      <div class="tool-pill"><span>🕷️</span> Apify</div>
+      <div class="tool-pill"><span>🔗</span> LinkedIn</div>
+      <div class="tool-pill"><span>📘</span> Facebook</div>
+      <div class="tool-pill"><span>🎨</span> Kling AI (Pixazo)</div>
+      <div class="tool-pill"><span>⭐</span> Trustpilot</div>
+      <div class="tool-pill"><span>📅</span> Calendly</div>
+      <div class="tool-pill"><span>📝</span> Tally Forms</div>
+      <div class="tool-pill"><span>📊</span> Google Sheets</div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ===================== CONTACT ===================== -->
+  <section id="contact">
+    <div class="fade-up">
+      <p class="section-label">Get In Touch</p>
+      <h2 class="section-title">Let's build something<br/>that runs itself</h2>
+    </div>
+    <div class="contact-wrapper fade-up">
+      <div class="contact-info">
+        <p>Have a process in your business that's eating your team's time? Let's talk about how to automate it. I work with businesses in real estate, law, HVAC, plumbing, and more.</p>
+        <div class="contact-links">
+          <a href="mailto:Omisorekehinde8@gmail.com" class="contact-item">
+            <span class="contact-item-icon">📧</span>
+            Omisorekehinde8@gmail.com
+          </a>
+          <a href="https://wa.me/2348022645968" target="_blank" class="contact-item">
+            <span class="contact-item-icon">💬</span>
+            WhatsApp: +234 802 264 5968
+          </a>
+          <a href="https://www.linkedin.com/in/omisore-kehinde-olakunle-2929213ba" target="_blank" class="contact-item">
+            <span class="contact-item-icon">🔗</span>
+            LinkedIn — Omisore Kehinde Olakunle
+          </a>
+        </div>
+      </div>
+      <div class="contact-form">
+        <div class="form-group">
+          <label class="form-label">Your Name</label>
+          <input type="text" class="form-input" placeholder="John Smith" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-input" placeholder="john@company.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tell me about your business challenge</label>
+          <textarea class="form-textarea" placeholder="I run a real estate company and my team spends 3 hours a day manually following up with leads..."></textarea>
+        </div>
+        <a href="mailto:Omisorekehinde8@gmail.com" class="btn btn-primary" style="width:fit-content;">Send Message →</a>
+        <!-- 💡 NOTE: This form currently opens your email client.
+             When you're ready to upgrade to a proper form (that sends directly),
+             ask for help setting up Formspree or Tally — both are free and no-code.
+        -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer>
+    <div class="footer-logo">Ola<span>kunle</span></div>
+    <div class="footer-copy">© 2026 Omisore Kehinde. All rights reserved.</div>
+  </footer>
+
+  <!-- ===================== SCROLL ANIMATIONS ===================== -->
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>
